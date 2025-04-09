@@ -5,6 +5,9 @@ import statsmodels.formula.api as smf
 from joblib import Parallel, delayed
 from toolz import partial
 
+
+### Добавить fit predict по нормальному как в соседнем классе
+
 class SyntheticDIDModel:
     def __init__(self, data, outcome_col, period_index_col, shopno_col, treat_col, post_col, seed=42):
         self.data = data.copy()
