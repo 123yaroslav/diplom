@@ -6,10 +6,8 @@ from joblib import Parallel, delayed
 from toolz import partial
 
 
-### Добавить fit predict по нормальному как в соседнем классе
-
 class SyntheticDIDModel:
-    def __init__(self, data, outcome_col, period_index_col, shopno_col, treat_col, post_col, seed=42):
+    def __init__(self, data, outcome_col, period_index_col, shopno_col, treat_col, post_col, seed=42, bootstrap_rounds=100, njobs=4):
         self.data = data.copy()
         self.outcome_col = outcome_col
         self.period_index_col = period_index_col
@@ -17,6 +15,10 @@ class SyntheticDIDModel:
         self.treat_col = treat_col
         self.post_col = post_col
         self.seed = seed
+        self.bootstrap_rounds = bootstrap_rounds
+        self.njobs = njobs
+
+
 
     def calculate_regularization(self, data):
         n_treated_post = data.query(f"{self.post_col}").query(f"{self.treat_col}").shape[0]
@@ -103,3 +105,12 @@ class SyntheticDIDModel:
         did_model = smf.wls(formula, data=did_data, weights=did_data["weights"] + 1e-10).fit()
 
         return did_model.params[f"{self.post_col}:{self.treat_col}"], unit_weights, time_weights, did_model, intercept
+    
+    def estimate_se(self):
+        np.random.seed(self.seed)
+
+        effects = Parallel(n_jobs=self.njobs)(
+            delayed(self.synthetic_diff_in_diff)(self.make_random_placebo(self.data))
+            for _ in range(self.bootstrap_rounds)
+        )
+        return np.std(effects, axis=0)
