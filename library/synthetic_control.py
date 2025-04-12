@@ -7,17 +7,6 @@ import matplotlib.pyplot as plt
 
 class SyntheticControl:
     def __init__(self, data, metric, period_index, shopno, treated, after_treatment, bootstrap_rounds=100, seed=42, intercept=False):
-        """
-        Параметры:
-          data: pandas DataFrame с исходными данными
-          metric: имя колонки с метрикой (например, 'y')
-          period_index: имя колонки, обозначающей период (например, 'time')
-          shopno: имя колонки с идентификатором единицы (например, 'unit')
-          treated: имя булевой колонки-индикатора тритмента (например, 'treated')
-          after_treatment: имя булевой колонки-индикатора пост-периода (например, 'after_treatment')
-          bootstrap_rounds: число раундов бутстрепа для оценки стандартной ошибки
-          seed: зерно генератора случайных чисел для воспроизводимости
-        """
         self.data = data.copy()
         self.metric = metric
         self.period_index = period_index
@@ -29,21 +18,11 @@ class SyntheticControl:
         self.intercept = intercept
 
     def make_random_placebo(self):
-        """
-        Генерирует placebo-версию данных, выбирая случайный магазин из контрольной группы.
-        Для контрольных наблюдений (treated == False) случайно выбирается магазин, и для него устанавливается treated=True.
-        Остальные наблюдения остаются неизменными.
-        """
-        # Фильтруем контрольную группу
-        control = self.data.query(f"not {self.treated}")
-        # Получаем уникальные идентификаторы магазинов/единиц из контрольной группы
+        control = self.data.query(f"~{self.treated}")
         shopnos = control[self.shopno].unique()
-        # Случайно выбираем один идентификатор
         placebo_shopno = np.random.choice(shopnos)
-        # Для контрольной группы создаём переменную treated, равную True только для выбранного магазина
-        placebo_data = self.data.copy()
-        placebo_data.loc[placebo_data[self.shopno].isin([placebo_shopno]), self.treated] = True
-        return placebo_data
+        return control.assign(**{self.treated: control[self.shopno] == placebo_shopno})
+
 
     def synthetic_control(self, data=None):
         if data is None:
@@ -87,11 +66,6 @@ class SyntheticControl:
         return att
     
     def estimate_se_sc(self, alpha=0.05):
-        """
-        Оценивает стандартную ошибку оценки эффекта (SE) с помощью бутстрепирования.
-        Для каждого раунда генерируются placebo-данные, на которых вычисляется ATT.
-        Возвращается стандартное отклонение оценок ATT по бутстреп-раундам.
-        """
         np.random.seed(self.seed)
         att = self.synthetic_control()
 
@@ -102,26 +76,13 @@ class SyntheticControl:
             effects.append(att_placebo)
         se = np.std(effects, ddof=1)
 
-        z = norm.ppf(1 - alpha / 2)  # z-статистика для нормального распределения
+        z = norm.ppf(1 - alpha / 2)
         ci_lower = att - z * se
         ci_upper = att + z * se
 
         return se, ci_lower, ci_upper
     
     def plot_synthetic_control(self, T0):
-        """
-        Строит график для оценки синтетического контроля.
-        
-        Параметры:
-          T0: индекс (или позиция) начала вмешательства, начиная с которого считается пост-период.
-        
-        На графике:
-          - серой линией отображаются траектории контрольных единиц,
-          - красной – наблюдения тритментной группы,
-          - черной пунктирной – синтетический контроль,
-          - синей пунктирной вертикальной линией – начало вмешательства.
-        """
-        # Подготовка обучающих данных для контроля
         y_co_pre = (self.data
                     .query(f"{self.treated} == False and {self.after_treatment} == False")
                     .pivot(index=self.period_index, columns=self.shopno, values=self.metric)
@@ -138,17 +99,17 @@ class SyntheticControl:
         if self.intercept:
             a = cp.Variable()
             objective = cp.Minimize(cp.sum_squares(a + X @ w - y))
-            self.a_ = a.value
         else:
             objective = cp.Minimize(cp.sum_squares(X @ w - y))
         constraints = [cp.sum(w) == 1, w >= 0]
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=False)
+        if self.intercept:
+            self.a_ = a.value
         
         self.w_ = w.value
         self.control_units_ = y_co_pre.columns
-        
-        # Расчёт синтетического ряда для всех периодов
+
         y_co_all = (self.data
                     .query(f"{self.treated} == False")
                     .pivot(index=self.period_index, columns=self.shopno, values=self.metric)
@@ -159,40 +120,33 @@ class SyntheticControl:
             sc_full = self.a_ + y_co_all.dot(weights_series)
         else:
             sc_full = y_co_all.dot(weights_series)
-        
-        # Наблюдения тритментной группы для всего временного ряда
+
         y_tr_all = (self.data
                     .query(f"{self.treated} == True")
                     .sort_values(self.period_index)[self.metric]
                     .reset_index(drop=True)
                    )
-        
-        # Вывод весов синтетического контроля (ненулевые)
+
         print("Веса синтетического контроля:")
         weights_df = weights_series.reset_index().rename(columns={'index': 'unit'})
         for i in range(len(weights_df)):
             value = weights_df.loc[i, 'weights']
             if value > 0:
                 print(f"Индекс: {weights_df.loc[i, 'unit']}, Значение: {round(value, 2)}")
-                
-        # Построение графика
+
         fig, ax = plt.subplots(figsize=(10, 6))
-        
-        # Отображение траекторий контрольных единиц
+
         controls_all = self.data.query(f"{self.treated} == False")
         for unit_idx in controls_all[self.shopno].unique():
             subset = controls_all.query(f"{self.shopno} == @unit_idx").sort_values(self.period_index)
             ax.plot(subset[self.period_index], subset[self.metric], color="gray", alpha=0.5, linewidth=1)
-        
-        # Тритментная группа (факт)
+
         treated_all = self.data.query(f"{self.treated} == True").sort_values(self.period_index)
         ax.plot(treated_all[self.period_index], treated_all[self.metric], color="red", label="Тестовая группа", linewidth=2)
-        
-        # Синтетический контроль
+
         ax.plot(sc_full.index, sc_full.values, color="black", linestyle="--",
                 label="Синтетический контроль", linewidth=2)
-        
-        # Вертикальная линия, обозначающая начало вмешательства
+
         ax.axvline(T0 - 0.5, color='blue', linestyle=':', label='Начало вмешательства')
         
         ax.set_xlabel("Время")
