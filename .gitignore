@@ -1,5 +1,2 @@
-__pycache__/
-library/__pycache__/
-
-data/
-data.pt
+.library/__pycache__
+__pycache__
