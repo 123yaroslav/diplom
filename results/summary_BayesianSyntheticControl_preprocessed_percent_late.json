@@ -1,0 +1,30 @@
+{
+  "model": "BayesianSyntheticControl",
+  "metric": "preprocessed_percent_late",
+  "summary": [
+    {
+      "effect_size": 5,
+      "type1_error": 0.45555555555555555,
+      "type2_error": 0.4777777777777778,
+      "rmspe": 4.949479793091616
+    },
+    {
+      "effect_size": 10,
+      "type1_error": 0.45555555555555555,
+      "type2_error": 0.4888888888888889,
+      "rmspe": 9.7884430716364
+    },
+    {
+      "effect_size": 15,
+      "type1_error": 0.45555555555555555,
+      "type2_error": 0.4222222222222222,
+      "rmspe": 14.651271689212207
+    },
+    {
+      "effect_size": 20,
+      "type1_error": 0.45555555555555555,
+      "type2_error": 0.37777777777777777,
+      "rmspe": 19.520069370607608
+    }
+  ]
+}

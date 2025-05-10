@@ -1,0 +1,30 @@
+{
+  "model": "BayesianSyntheticControl",
+  "metric": "preprocessed_orders_per_courier",
+  "summary": [
+    {
+      "effect_size": 5,
+      "type1_error": 0.45555555555555555,
+      "type2_error": 0.4444444444444444,
+      "rmspe": 4.277939204024916
+    },
+    {
+      "effect_size": 10,
+      "type1_error": 0.45555555555555555,
+      "type2_error": 0.2,
+      "rmspe": 8.333322127325799
+    },
+    {
+      "effect_size": 15,
+      "type1_error": 0.45555555555555555,
+      "type2_error": 0.06666666666666667,
+      "rmspe": 12.434648742749252
+    },
+    {
+      "effect_size": 20,
+      "type1_error": 0.45555555555555555,
+      "type2_error": 0.011111111111111112,
+      "rmspe": 16.54764761731004
+    }
+  ]
+}

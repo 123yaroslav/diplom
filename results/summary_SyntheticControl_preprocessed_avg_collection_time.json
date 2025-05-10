@@ -1,0 +1,30 @@
+{
+  "model": "SyntheticControl",
+  "metric": "preprocessed_avg_collection_time",
+  "summary": [
+    {
+      "effect_size": 0.05,
+      "type1_error": 0.06666666666666667,
+      "type2_error": 0.8555555555555555,
+      "mean_se": 0.06950563369316207
+    },
+    {
+      "effect_size": 0.1,
+      "type1_error": 0.06666666666666667,
+      "type2_error": 0.5555555555555556,
+      "mean_se": 0.06950563369316207
+    },
+    {
+      "effect_size": 0.15,
+      "type1_error": 0.06666666666666667,
+      "type2_error": 0.15555555555555556,
+      "mean_se": 0.06950563369316207
+    },
+    {
+      "effect_size": 0.2,
+      "type1_error": 0.06666666666666667,
+      "type2_error": 0.022222222222222223,
+      "mean_se": 0.06950563369316207
+    }
+  ]
+}

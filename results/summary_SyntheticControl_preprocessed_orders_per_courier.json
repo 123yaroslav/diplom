@@ -1,0 +1,30 @@
+{
+  "model": "SyntheticControl",
+  "metric": "preprocessed_orders_per_courier",
+  "summary": [
+    {
+      "effect_size": 0.05,
+      "type1_error": 0.03333333333333333,
+      "type2_error": 0.9,
+      "mean_se": 1.0985050801287386
+    },
+    {
+      "effect_size": 0.1,
+      "type1_error": 0.03333333333333333,
+      "type2_error": 0.6111111111111112,
+      "mean_se": 1.0985050801287386
+    },
+    {
+      "effect_size": 0.15,
+      "type1_error": 0.03333333333333333,
+      "type2_error": 0.24444444444444444,
+      "mean_se": 1.0985050801287386
+    },
+    {
+      "effect_size": 0.2,
+      "type1_error": 0.03333333333333333,
+      "type2_error": 0.05555555555555555,
+      "mean_se": 1.0985050801287386
+    }
+  ]
+}

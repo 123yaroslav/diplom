@@ -1,0 +1,30 @@
+{
+  "model": "BayesianSyntheticControl",
+  "metric": "preprocessed_distance",
+  "summary": [
+    {
+      "effect_size": 5,
+      "type1_error": 0.4666666666666667,
+      "type2_error": 0.14444444444444443,
+      "rmspe": 4.931371175106034
+    },
+    {
+      "effect_size": 10,
+      "type1_error": 0.4666666666666667,
+      "type2_error": 0.1,
+      "rmspe": 9.857646542433724
+    },
+    {
+      "effect_size": 15,
+      "type1_error": 0.4666666666666667,
+      "type2_error": 0.1,
+      "rmspe": 14.784233760252095
+    },
+    {
+      "effect_size": 20,
+      "type1_error": 0.4666666666666667,
+      "type2_error": 0.08888888888888889,
+      "rmspe": 19.71084557856974
+    }
+  ]
+}

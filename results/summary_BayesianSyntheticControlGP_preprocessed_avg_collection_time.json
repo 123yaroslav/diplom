@@ -1,0 +1,30 @@
+{
+  "model": "BayesianSyntheticControlGP",
+  "metric": "preprocessed_avg_collection_time",
+  "summary": [
+    {
+      "effect_size": 5,
+      "type1_error": 0.4,
+      "type2_error": 0.3,
+      "rmspe": 5.0
+    },
+    {
+      "effect_size": 10,
+      "type1_error": 0.4,
+      "type2_error": 0.15,
+      "rmspe": 10.0
+    },
+    {
+      "effect_size": 15,
+      "type1_error": 0.4,
+      "type2_error": 0.05,
+      "rmspe": 15.0
+    },
+    {
+      "effect_size": 20,
+      "type1_error": 0.4,
+      "type2_error": 0.02,
+      "rmspe": 20.0
+    }
+]
+}

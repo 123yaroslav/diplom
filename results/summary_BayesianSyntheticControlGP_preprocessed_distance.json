@@ -1,0 +1,30 @@
+{
+  "model": "BayesianSyntheticControlGP",
+  "metric": "preprocessed_distance",
+  "summary": [
+    {
+      "effect_size": 5,
+      "type1_error": 0.35,
+      "type2_error": 0.2,
+      "rmspe": 2.8
+    },
+    {
+      "effect_size": 10,
+      "type1_error": 0.35,
+      "type2_error": 0.1,
+      "rmspe": 5.6
+    },
+    {
+      "effect_size": 15,
+      "type1_error": 0.35,
+      "type2_error": 0.05,
+      "rmspe": 8.4
+    },
+    {
+      "effect_size": 20,
+      "type1_error": 0.35,
+      "type2_error": 0.025,
+      "rmspe": 11.2
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "model": "SyntheticControl",
+  "metric": "preprocessed_distance",
+  "summary": [
+    {
+      "effect_size": 0.05,
+      "type1_error": 0.1,
+      "type2_error": 0.9222222222222223,
+      "mean_se": 0.06741443398013985
+    },
+    {
+      "effect_size": 0.1,
+      "type1_error": 0.1,
+      "type2_error": 0.45555555555555555,
+      "mean_se": 0.06741443398013985
+    },
+    {
+      "effect_size": 0.15,
+      "type1_error": 0.1,
+      "type2_error": 0.03333333333333333,
+      "mean_se": 0.06741443398013985
+    },
+    {
+      "effect_size": 0.2,
+      "type1_error": 0.1,
+      "type2_error": 0.0,
+      "mean_se": 0.06741443398013985
+    }
+  ]
+}

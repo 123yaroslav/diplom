@@ -1,2 +1,14 @@
-.library/__pycache__
-__pycache__
+__pycache__/
+.library/__pycache__/
+
+data.pt
+
+data/
+drafts/
+
+05_CUPED.ipynb
+causalpy_troubles.ipynb
+synthdidfix.ipynb
+synthdidfix2.ipynb
+tests.ipynb
+01_examples copy.ipynb

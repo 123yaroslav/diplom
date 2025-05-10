@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 import matplotlib.pyplot as plt
+from scipy.optimize import fmin_slsqp
 
 
 class SyntheticControl:
@@ -23,10 +24,29 @@ class SyntheticControl:
         placebo_shopno = np.random.choice(shopnos)
         return control.assign(**{self.treated: control[self.shopno] == placebo_shopno})
 
+    def _loss_function(self, params, X, y):
+        """Функция потерь для оптимизатора"""
+        if self.intercept:
+            a, w = params[0], params[1:]
+            pred = a + X @ w
+        else:
+            w = params
+            pred = X @ w
+        
+        return np.sum((pred - y) ** 2)
+
+    def _weight_constraint(self, params):
+        """Ограничение: сумма весов = 1"""
+        if self.intercept:
+            return np.sum(params[1:]) - 1
+        else:
+            return np.sum(params) - 1
 
     def synthetic_control(self, data=None):
         if data is None:
             data = self.data
+        
+        is_original_data = (data is self.data)  # Флаг, определяющий оригинальные данные
 
         x_pre_control = (data
                          .query(f"not {self.treated}")
@@ -40,40 +60,101 @@ class SyntheticControl:
                             .groupby(self.period_index)[self.metric]
                             .mean())
 
-        w = cp.Variable(x_pre_control.shape[1])
+        n_controls = x_pre_control.shape[1]
+        
+        # Проверка на пустые данные
+        if n_controls == 0 or len(y_pre_treat_mean) == 0:
+            raise ValueError("Недостаточно данных для обучения синтетического контроля")
+        
         if self.intercept:
-            a = cp.Variable()
-            objective = cp.Minimize(cp.sum_squares(a + x_pre_control @ w - y_pre_treat_mean.values))
+            # Начальные значения: интерсепт = 0, равные веса
+            params_init = np.zeros(n_controls + 1)
+            params_init[1:] = 1.0 / n_controls
+            bounds = [(None, None)] + [(0.0, None)] * n_controls
         else:
-            objective = cp.Minimize(cp.sum_squares(x_pre_control @ w - y_pre_treat_mean.values))
-        constraints = [cp.sum(w) == 1, w >= 0]
-        problem = cp.Problem(objective, constraints)
-        problem.solve()
+            # Начальные значения: равные веса
+            params_init = np.ones(n_controls) / n_controls
+            bounds = [(0.0, None)] * n_controls
+            
+        try:
+            result = fmin_slsqp(
+                lambda params: self._loss_function(params, x_pre_control, y_pre_treat_mean.values),
+                params_init,
+                f_eqcons=self._weight_constraint,
+                bounds=bounds,
+                disp=0
+            )
+            
+            if self.intercept:
+                a_value, w_value = result[0], result[1:]
+            else:
+                a_value, w_value = 0, result
+                
+            # Сохраняем вычисленные веса только для оригинальных данных
+            if is_original_data:
+                self.w_ = w_value
+                if self.intercept:
+                    self.a_ = a_value
+            
+            # Получаем контрольные данные для всех периодов
+            x_all_control = (data
+                            .query(f"not {self.treated}")
+                            .pivot(index=self.period_index, columns=self.shopno, values=self.metric)
+                            .values)
 
-        x_all_control = (data
-                         .query(f"not {self.treated}")
-                         .pivot(index=self.period_index, columns=self.shopno, values=self.metric)
-                         .values)
+            if self.intercept:
+                sc_series = a_value + x_all_control @ w_value
+            else:
+                sc_series = x_all_control @ w_value
 
-        if self.intercept:
-            sc_series = a.value + x_all_control @ w.value
-        else:
-            sc_series = x_all_control @ w.value
+            y_post_treat = data.query(f"{self.treated} and {self.after_treatment}")[self.metric].values
+            sc_post = sc_series[-len(y_post_treat):]
+            att = np.mean(y_post_treat - sc_post)
+            return att
+            
+        except Exception as e:
+            raise RuntimeError(f"Не удалось решить задачу оптимизации: {str(e)}")
+    
+    def rmspe(self):
+        if not hasattr(self, 'w_'):
+            # Если веса еще не вычислены, вызываем synthetic_control() с оригинальными данными
+            self.synthetic_control(data=self.data)
 
-        y_post_treat = data.query(f"{self.treated} and {self.after_treatment}")[self.metric].values
-        sc_post = sc_series[-len(y_post_treat):]
-        att = np.mean(y_post_treat - sc_post)
-        return att
+        pre_data = self.data.query(f"not {self.after_treatment}")
+
+        X_pre = (pre_data
+                 .query(f"not {self.treated}")
+                 .pivot(index=self.period_index, columns=self.shopno, values=self.metric)
+                 .values)
+        y_pre = (pre_data
+                 .query(f"{self.treated}")
+                 .sort_values(self.period_index)[self.metric]
+                 .values)
+
+        # Проверяем согласованность размерностей перед умножением
+        if X_pre.shape[1] != self.w_.shape[0]:
+            raise ValueError(f"Несоответствие размерностей матриц: X_pre {X_pre.shape}, w_ {self.w_.shape}")
+
+        synth_pre = X_pre.dot(self.w_)
+        if self.intercept and hasattr(self, 'a_'):
+            synth_pre = self.a_ + synth_pre
+
+        error = y_pre - synth_pre
+        return np.sqrt(np.mean(error**2))
     
     def estimate_se_sc(self, alpha=0.05):
         np.random.seed(self.seed)
-        att = self.synthetic_control()
+        
+        # Вычисляем ATT для оригинальных данных
+        att = self.synthetic_control(data=self.data)
 
         effects = []
         for _ in range(self.bootstrap_rounds):
             placebo_data = self.make_random_placebo()
+            # Используем синтетический контроль для плацебо-данных без изменения атрибутов
             att_placebo = self.synthetic_control(data=placebo_data)
             effects.append(att_placebo)
+        
         se = np.std(effects, ddof=1)
 
         z = norm.ppf(1 - alpha / 2)
@@ -95,19 +176,29 @@ class SyntheticControl:
         y = y_tr_pre.values
         n_features = X.shape[1]
         
-        w = cp.Variable(n_features)
+        # Используем fmin_slsqp вместо cvxpy
         if self.intercept:
-            a = cp.Variable()
-            objective = cp.Minimize(cp.sum_squares(a + X @ w - y))
+            params_init = np.zeros(n_features + 1)
+            params_init[1:] = 1.0 / n_features
+            bounds = [(None, None)] + [(0.0, None)] * n_features
         else:
-            objective = cp.Minimize(cp.sum_squares(X @ w - y))
-        constraints = [cp.sum(w) == 1, w >= 0]
-        problem = cp.Problem(objective, constraints)
-        problem.solve(verbose=False)
-        if self.intercept:
-            self.a_ = a.value
+            params_init = np.ones(n_features) / n_features
+            bounds = [(0.0, None)] * n_features
+            
+        result = fmin_slsqp(
+            lambda params: self._loss_function(params, X, y),
+            params_init,
+            f_eqcons=self._weight_constraint,
+            bounds=bounds,
+            disp=0
+        )
         
-        self.w_ = w.value
+        if self.intercept:
+            self.a_ = result[0]
+            self.w_ = result[1:]
+        else:
+            self.w_ = result
+        
         self.control_units_ = y_co_pre.columns
 
         y_co_all = (self.data
@@ -134,7 +225,7 @@ class SyntheticControl:
             if value > 0:
                 print(f"Индекс: {weights_df.loc[i, 'unit']}, Значение: {round(value, 2)}")
 
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(14, 7))
 
         controls_all = self.data.query(f"{self.treated} == False")
         for unit_idx in controls_all[self.shopno].unique():

@@ -1,0 +1,30 @@
+{
+  "model": "BayesianSyntheticControlGP",
+  "metric": "preprocessed_orders_per_courier",
+  "summary": [
+    {
+      "effect_size": 5,
+      "type1_error": 0.42,
+      "type2_error": 0.35,
+      "rmspe": 4.2
+    },
+    {
+      "effect_size": 10,
+      "type1_error": 0.42,
+      "type2_error": 0.18,
+      "rmspe": 8.5
+    },
+    {
+      "effect_size": 15,
+      "type1_error": 0.42,
+      "type2_error": 0.08,
+      "rmspe": 12.9
+    },
+    {
+      "effect_size": 20,
+      "type1_error": 0.42,
+      "type2_error": 0.04,
+      "rmspe": 17.2
+    }
+  ]
+}

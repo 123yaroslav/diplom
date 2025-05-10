@@ -1,0 +1,30 @@
+{
+  "model": "BayesianSyntheticControl",
+  "metric": "preprocessed_avg_collection_time",
+  "summary": [
+    {
+      "effect_size": 5,
+      "type1_error": 0.5444444444444444,
+      "type2_error": 0.32222222222222224,
+      "rmspe": 4.937013290779491
+    },
+    {
+      "effect_size": 10,
+      "type1_error": 0.5444444444444444,
+      "type2_error": 0.2,
+      "rmspe": 9.871356385466433
+    },
+    {
+      "effect_size": 15,
+      "type1_error": 0.5444444444444444,
+      "type2_error": 0.07777777777777778,
+      "rmspe": 14.806006637322719
+    },
+    {
+      "effect_size": 20,
+      "type1_error": 0.5444444444444444,
+      "type2_error": 0.05555555555555555,
+      "rmspe": 19.740760788840493
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "model": "SyntheticDiff-in-Diff",
+  "metric": "preprocessed_percent_late",
+  "summary": [
+    {
+      "effect_size": 0.05,
+      "type1_error": 0.08888888888888889,
+      "type2_error": 0.9222222222222223,
+      "mean_se": 0.6567126584791907
+    },
+    {
+      "effect_size": 0.1,
+      "type1_error": 0.08888888888888889,
+      "type2_error": 0.9222222222222223,
+      "mean_se": 0.6567126584791907
+    },
+    {
+      "effect_size": 0.15,
+      "type1_error": 0.08888888888888889,
+      "type2_error": 0.9111111111111111,
+      "mean_se": 0.6567126584791907
+    },
+    {
+      "effect_size": 0.2,
+      "type1_error": 0.08888888888888889,
+      "type2_error": 0.9,
+      "mean_se": 0.6567126584791907
+    }
+  ]
+}
